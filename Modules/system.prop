@@ -1,0 +1,14 @@
+ro.config.media_vol_steps=60
+
+ro.config.vc_call_vol_steps=14
+
+af.resampler.quality=4
+
+audio.offload.video=true
+
+audio.offload.pcm.16bit.enable=true
+audio.offload.pcm.24bit.enable=true
+
+aaudio.mmap_policy=2
+aaudio.mmap_exclusive_policy=2
+aaudio.hw_burst_min_usec=2000
