@@ -12,3 +12,7 @@ aaudio.mmap_exclusive_policy=2
 aaudio.hw_burst_min_usec=2000
 ro.audio.hifi=true
 persist.audio.hifi=true
+ro.audio.flinger_standby_time_ms=3000
+vendor.audio.offload.buffer.size.kb=256
+ro.audio.monitorRotation=true
+audio.offload.min.duration.secs=15
