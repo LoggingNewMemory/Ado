@@ -32,6 +32,8 @@ flash_via_adb() {
     local zip_path="$1"
     local zip_name=$(basename "$zip_path")
     local remote_path="/data/local/tmp/$zip_name"
+    local local_script="$BUILD_DIR/tmp_install.sh"
+    local remote_script="/data/local/tmp/tmp_install.sh"
 
     echo ""
     echo "---------------------------------"
@@ -51,44 +53,63 @@ flash_via_adb() {
         return 1
     fi
 
+    # Check for Shell Root Access explicitly
+    echo "🔎 Checking root access..."
+    local root_check=$(adb shell su -c 'id -u' 2>/dev/null | tr -d '\r' | tr -d ' ')
+    if [ "$root_check" != "0" ]; then
+        echo "❌ Error: Please Grant \"Shell\" Root Access in Your Root Manager."
+        return 1
+    fi
+
     echo "📲 Pushing $zip_name to /data/local/tmp/..."
     if ! adb push "$zip_path" "$remote_path"; then
         echo "❌ Error: Failed to push file to device."
         return 1
     fi
 
+    # 1. Create the installation script locally to avoid ADB multiline escaping issues
+    cat << 'EOF' > "$local_script"
+TARGET_ZIP="$1"
+
+if command -v ksud >/dev/null 2>&1; then
+    echo "✅ Detected: KernelSU Based"
+    echo "📦 Installing module..."
+    ksud module install "$TARGET_ZIP"
+elif command -v magisk >/dev/null 2>&1; then
+    echo "✅ Detected: Magisk Based"
+    echo "📦 Installing module..."
+    magisk module install "$TARGET_ZIP"
+elif command -v apd >/dev/null 2>&1; then
+    echo "✅ Detected: APatch"
+    echo "📦 Installing module..."
+    apd module install "$TARGET_ZIP"
+else
+    echo "❌ Error: No supported root manager found."
+    rm -f "$TARGET_ZIP"
+    exit 1
+fi
+
+echo "🧹 Cleaning up temporary files..."
+rm -f "$TARGET_ZIP"
+echo "✅ Flashing process completed on device!"
+EOF
+
+    # 2. Push the script to the device
+    adb push "$local_script" "$remote_script" >/dev/null 2>&1
+
     echo "🔄 Flashing module via root manager..."
-    # Execute root manager detection and installation remotely via su
-    adb shell su -c "
-        if command -v magisk >/dev/null 2>&1; then
-            ROOT_TOOL='magisk'
-            ROOT_MANAGER_NAME='Magisk Based'
-        elif command -v ksud >/dev/null 2>&1; then
-            ROOT_TOOL='ksud'
-            ROOT_MANAGER_NAME='KernelSU Based'
-        elif command -v apd >/dev/null 2>&1; then
-            ROOT_TOOL='apd'
-            ROOT_MANAGER_NAME='APatch'
-        else
-            echo '❌ Error: No supported root manager found.'
-            rm -f '$remote_path'
-            exit 1
-        fi
-        
-        echo '✅ Detected: '\$ROOT_MANAGER_NAME
-        echo '📦 Installing module...'
-        \$ROOT_TOOL module install '$remote_path'
-        
-        echo '🧹 Cleaning up temporary files...'
-        rm -f '$remote_path'
-        echo '✅ Flashing process completed on device!'
-    "
+    # 3. Execute the script cleanly (no newlines to confuse su)
+    adb shell su -c "sh '$remote_script' '$remote_path'"
+
+    # 4. Clean up the script file on both ends
+    adb shell rm -f "$remote_script"
+    rm -f "$local_script"
 
     # Optional prompt to reboot the device
     echo ""
     read -p "Do you want to reboot the device now? (y/N): " REBOOT_DEV
     if [[ "${REBOOT_DEV,,}" == "y" || "${REBOOT_DEV,,}" == "yes" ]]; then
-        echo "Rebooting device..."
+        echo "Rebooting device... 👋"
         adb reboot
     fi
     echo "---------------------------------"
