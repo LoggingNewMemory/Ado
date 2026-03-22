@@ -27,6 +27,73 @@ success() {
     echo "---------------------------------"
 }
 
+# Function to flash module directly via ADB
+flash_via_adb() {
+    local zip_path="$1"
+    local zip_name=$(basename "$zip_path")
+    local remote_path="/data/local/tmp/$zip_name"
+
+    echo ""
+    echo "---------------------------------"
+    echo "      Direct ADB Flashing        "
+    echo "---------------------------------"
+
+    # Check if adb is available
+    if ! command -v adb >/dev/null 2>&1; then
+        echo "❌ Error: 'adb' is not installed or not in PATH."
+        return 1
+    fi
+
+    # Check if a device is connected
+    local device_state=$(adb get-state 2>/dev/null)
+    if [ "$device_state" != "device" ]; then
+        echo "❌ Error: No device connected or device unauthorized."
+        return 1
+    fi
+
+    echo "📲 Pushing $zip_name to /data/local/tmp/..."
+    if ! adb push "$zip_path" "$remote_path"; then
+        echo "❌ Error: Failed to push file to device."
+        return 1
+    fi
+
+    echo "🔄 Flashing module via root manager..."
+    # Execute root manager detection and installation remotely via su
+    adb shell su -c "
+        if command -v magisk >/dev/null 2>&1; then
+            ROOT_TOOL='magisk'
+            ROOT_MANAGER_NAME='Magisk Based'
+        elif command -v ksud >/dev/null 2>&1; then
+            ROOT_TOOL='ksud'
+            ROOT_MANAGER_NAME='KernelSU Based'
+        elif command -v apd >/dev/null 2>&1; then
+            ROOT_TOOL='apd'
+            ROOT_MANAGER_NAME='APatch'
+        else
+            echo '❌ Error: No supported root manager found.'
+            rm -f '$remote_path'
+            exit 1
+        fi
+        
+        echo '✅ Detected: '\$ROOT_MANAGER_NAME
+        echo '📦 Installing module...'
+        \$ROOT_TOOL module install '$remote_path'
+        
+        echo '🧹 Cleaning up temporary files...'
+        rm -f '$remote_path'
+        echo '✅ Flashing process completed on device!'
+    "
+
+    # Optional prompt to reboot the device
+    echo ""
+    read -p "Do you want to reboot the device now? (y/N): " REBOOT_DEV
+    if [[ "${REBOOT_DEV,,}" == "y" || "${REBOOT_DEV,,}" == "yes" ]]; then
+        echo "Rebooting device..."
+        adb reboot
+    fi
+    echo "---------------------------------"
+}
+
 # Function to send file to Telegram
 send_to_telegram() {
     local file_path="$1"
@@ -183,6 +250,19 @@ prompt_changelog() {
     fi
 }
 
+# Function to prompt for ADB push and flash
+prompt_adb_flash() {
+    echo ""
+    read -p "Flash directly to connected device via ADB? (y/N): " DO_ADB_FLASH
+    DO_ADB_FLASH=${DO_ADB_FLASH,,}
+
+    if [[ "$DO_ADB_FLASH" == "y" || "$DO_ADB_FLASH" == "yes" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Function to prompt for Telegram posting
 prompt_telegram_post() {
     echo ""
@@ -233,6 +313,11 @@ build_modules() {
     echo "Created: $ZIP_NAME"
 
     cd ..
+
+    # --- ADB Flash Prompt ---
+    if prompt_adb_flash; then
+        flash_via_adb "$BUILD_DIR/$ZIP_NAME"
+    fi
 
     # Check if Telegram is enabled
     if [ "$TELEGRAM_ENABLED" = true ]; then
