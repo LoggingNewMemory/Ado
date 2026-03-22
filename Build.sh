@@ -313,9 +313,9 @@ build_modules() {
 
     cd "$MODULES_DIR" || exit 1
     MODULE_ID=$(grep "^id=" "module.prop" | cut -d'=' -f2 | tr -d '[:space:]')
+    ORIGINAL_NAME=$(grep "^name=" "module.prop" | cut -d'=' -f2 | tr -d '\r')
 
-    # Fix: Use sed without attempting to preserve permissions
-    # Create a temporary file for the sed operation
+    # Update Version natively
     if [ -f "module.prop" ]; then
         cp "module.prop" "module.prop.tmp"
         sed "s/^version=.*$/version=$VERSION/" "module.prop.tmp" > "module.prop"
@@ -328,16 +328,69 @@ build_modules() {
         rm "customize.sh.tmp"
     fi
 
+    # --- 1. BUILD NORMAL ZIP ---
     ZIP_NAME="${MODULE_ID}-${VERSION}-${BUILD_TYPE}.zip"
     ZIP_PATH="../$BUILD_DIR/$ZIP_NAME"
     zip -q -r "$ZIP_PATH" ./*
     echo "Created: $ZIP_NAME"
 
+    # --- 2. BUILD ENHANCED ZIP ---
+    # Update module.prop for ENHANCED
+    if [ -f "module.prop" ]; then
+        cp "module.prop" "module.prop.tmp"
+        sed "s/^name=.*$/name=${ORIGINAL_NAME} [ENHANCED]/" "module.prop.tmp" > "module.prop"
+        rm "module.prop.tmp"
+    fi
+
+    # Append to system.prop for ENHANCED
+    if [ -f "system.prop" ]; then
+        # Backup outside the module directory so it doesn't get zipped
+        cp "system.prop" "../$BUILD_DIR/system.prop.original"
+        
+        # Add the properties with a leading empty line
+        cat << 'EOF' >> "system.prop"
+
+###################
+# ADO ENHANCED START
+###################
+
+af.resampler.quality=4
+EOF
+    fi
+
+    ZIP_NAME_ENHANCED="${MODULE_ID}-${VERSION}-${BUILD_TYPE}-ENHANCED.zip"
+    ZIP_PATH_ENHANCED="../$BUILD_DIR/$ZIP_NAME_ENHANCED"
+    zip -q -r "$ZIP_PATH_ENHANCED" ./*
+    echo "Created: $ZIP_NAME_ENHANCED"
+
+    # --- CLEANUP ---
+    # Restore module.prop back to normal
+    if [ -f "module.prop" ]; then
+        cp "module.prop" "module.prop.tmp"
+        sed "s/^name=.*$/name=${ORIGINAL_NAME}/" "module.prop.tmp" > "module.prop"
+        rm "module.prop.tmp"
+    fi
+
+    # Restore system.prop back to normal and delete the backup file
+    if [ -f "../$BUILD_DIR/system.prop.original" ]; then
+        mv "../$BUILD_DIR/system.prop.original" "system.prop"
+    fi
+
     cd ..
 
     # --- ADB Flash Prompt ---
     if prompt_adb_flash; then
-        flash_via_adb "$BUILD_DIR/$ZIP_NAME"
+        echo ""
+        echo "Which version do you want to flash?"
+        echo "1) Normal ($ZIP_NAME)"
+        echo "2) Enhanced ($ZIP_NAME_ENHANCED)"
+        read -p "Select (1/2): " FLASH_SELECTION
+        
+        if [ "$FLASH_SELECTION" == "2" ]; then
+            flash_via_adb "$BUILD_DIR/$ZIP_NAME_ENHANCED"
+        else
+            flash_via_adb "$BUILD_DIR/$ZIP_NAME"
+        fi
     fi
 
     # Check if Telegram is enabled
@@ -357,7 +410,7 @@ build_modules() {
 
                 # Create a summary message
                 SUMMARY_MESSAGE="🚀 *Yamada Module Build Complete*%0A%0A"
-                SUMMARY_MESSAGE+="📦 *Module:* $MODULE_ID%0A"
+                SUMMARY_MESSAGE+="📦 *Module:* $MODULE_ID (Normal & Enhanced)%0A"
                 SUMMARY_MESSAGE+="🏷️ *Version:* $VERSION%0A"
                 SUMMARY_MESSAGE+="🔧 *Build Type:* $BUILD_TYPE%0A"
 
@@ -370,10 +423,11 @@ build_modules() {
                     SUMMARY_MESSAGE+=%0A%0A"📝 *Changelog:*%0A$ENCODED_CHANGELOG"
                 fi
 
-                SUMMARY_MESSAGE+=%0A%0A"File uploading below... ⬇️"
+                SUMMARY_MESSAGE+=%0A%0A"Files uploading below... ⬇️"
 
                 local upload_success=0
-                local upload_total=${#SELECTED_GROUPS[@]}
+                local total_groups=${#SELECTED_GROUPS[@]}
+                local upload_total=$(( total_groups * 2 ))
 
                 # Loop through selected groups
                 for i in "${!SELECTED_GROUPS[@]}"; do
@@ -386,30 +440,41 @@ build_modules() {
                     # Send summary message first
                     send_message_to_telegram "$SUMMARY_MESSAGE" "$chat_id"
 
-                    # Upload the zip file
+                    # Upload Normal ZIP
                     if [ -f "$BUILD_DIR/$ZIP_NAME" ]; then
                         caption="📱 $MODULE_ID - $VERSION ($BUILD_TYPE)"
-
                         if send_to_telegram "$BUILD_DIR/$ZIP_NAME" "$caption" "$chat_id"; then
                             ((upload_success++))
-
-                            # Send completion message
-                            COMPLETION_MESSAGE="✅ *Upload Complete!*%0A%0AModule uploaded successfully to $group_name."
-                            send_message_to_telegram "$COMPLETION_MESSAGE" "$chat_id"
                         else
-                            # Send failure message
-                            FAILURE_MESSAGE="❌ *Upload Failed*%0A%0AThere was an issue uploading the module to $group_name."
+                            FAILURE_MESSAGE="❌ *Upload Failed*%0A%0AThere was an issue uploading the Normal module to $group_name."
                             send_message_to_telegram "$FAILURE_MESSAGE" "$chat_id"
                         fi
                     else
-                        echo "Error: ZIP file not found at $BUILD_DIR/$ZIP_NAME"
+                        echo "Error: Normal ZIP file not found at $BUILD_DIR/$ZIP_NAME"
                     fi
+
+                    # Upload Enhanced ZIP
+                    if [ -f "$BUILD_DIR/$ZIP_NAME_ENHANCED" ]; then
+                        caption_enhanced="📱 $MODULE_ID - $VERSION ($BUILD_TYPE) [ENHANCED]"
+                        if send_to_telegram "$BUILD_DIR/$ZIP_NAME_ENHANCED" "$caption_enhanced" "$chat_id"; then
+                            ((upload_success++))
+                        else
+                            FAILURE_MESSAGE="❌ *Upload Failed*%0A%0AThere was an issue uploading the ENHANCED module to $group_name."
+                            send_message_to_telegram "$FAILURE_MESSAGE" "$chat_id"
+                        fi
+                    else
+                        echo "Error: ENHANCED ZIP file not found at $BUILD_DIR/$ZIP_NAME_ENHANCED"
+                    fi
+                    
+                    # Final success message for this group
+                    COMPLETION_MESSAGE="✅ *Upload Complete!*%0A%0ABoth modules processed for $group_name."
+                    send_message_to_telegram "$COMPLETION_MESSAGE" "$chat_id"
                 done
 
                 echo ""
                 echo "📊 Upload Summary:"
-                echo "✅ Successful: $upload_success/$upload_total groups"
-                echo "❌ Failed: $((upload_total - upload_success))/$upload_total groups"
+                echo "✅ Successful: $upload_success/$upload_total files"
+                echo "❌ Failed: $((upload_total - upload_success))/$upload_total files"
 
             else
                 echo "Telegram upload cancelled."
