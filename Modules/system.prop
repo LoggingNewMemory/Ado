@@ -15,3 +15,5 @@ ro.audio.flinger_standby_time_ms=3000
 vendor.audio.offload.buffer.size.kb=256
 ro.audio.monitorRotation=true
 audio.offload.min.duration.secs=15
+ro.af.client_heap_size_kbyte=7168
+ro.audio.spatializer_enabled=true
