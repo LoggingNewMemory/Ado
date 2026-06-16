@@ -355,6 +355,30 @@ build_modules() {
 ###################
 
 af.resampler.quality=4
+ro.af.client_heap_size_kbyte=10240
+vendor.audio.offload.buffer.size.kb=1024
+audio.offload.multiple.enabled=true
+vendor.audio.offload.passthrough=true
+ro.audio.ignore_effects=true
+ro.audio.samplerate=192000
+ro.vendor.audio.sdk.fluencetype=fluencepro
+persist.vendor.audio.hw.binder.size_kbyte=1024
+vendor.audio.hal.output.suspend.supported=false
+EOF
+    fi
+
+    # Append to OdoruPonpokorin.sh for ENHANCED
+    if [ -f "AdoKang/OdoruPonpokorin.sh" ]; then
+        cp "AdoKang/OdoruPonpokorin.sh" "../$BUILD_DIR/OdoruPonpokorin.sh.original"
+        
+        cat << 'EOF' >> "AdoKang/OdoruPonpokorin.sh"
+
+# ENHANCED: Override media processing and aggressive debug disabling
+setprop debug.audio.hal 0
+setprop debug.audio.policy 0
+for pid in $(pidof audioserver); do
+    ionice -c 1 -n 0 -p $pid
+done
 EOF
     fi
 
@@ -374,6 +398,10 @@ EOF
     # Restore system.prop back to normal and delete the backup file
     if [ -f "../$BUILD_DIR/system.prop.original" ]; then
         mv "../$BUILD_DIR/system.prop.original" "system.prop"
+    fi
+
+    if [ -f "../$BUILD_DIR/OdoruPonpokorin.sh.original" ]; then
+        mv "../$BUILD_DIR/OdoruPonpokorin.sh.original" "AdoKang/OdoruPonpokorin.sh"
     fi
 
     cd ..

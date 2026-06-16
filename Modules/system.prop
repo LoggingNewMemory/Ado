@@ -19,3 +19,15 @@ ro.af.client_heap_size_kbyte=7168
 ro.audio.spatializer_enabled=true
 persist.bluetooth.a2dp_ldac.default_quality_mode=0
 persist.bluetooth.opus.enabled=true
+
+# Added to Enhance Normal version
+vendor.audio.flac.sw.decoder.24bit=true
+vendor.audio.use.sw.alac.decoder=true
+vendor.audio.use.sw.ape.decoder=true
+vendor.audio.offload.multiaac.enable=true
+persist.bluetooth.sbc_hd_higher_bitrate=1
+persist.bluetooth.disableabsvol=true
+ro.bluetooth.a2dp_offload.supported=true
+vendor.audio.volume.headset.gain.depcal=true
+audio.sys.routing.latency=0
+audio.sys.offload.pstimeout.secs=3

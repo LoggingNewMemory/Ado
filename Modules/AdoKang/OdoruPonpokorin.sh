@@ -17,3 +17,13 @@ for pid in $(pidof android.hardware.audio.service android.hardware.audio.service
     renice -n -20 -p $pid
     chrt -f -p 99 $pid
 done
+
+for pid in $(pidof mediaserver media.codec media.extractor); do
+    renice -n -20 -p $pid
+    chrt -f -p 99 $pid
+done
+
+for pid in $(pidof vendor.qti.hardware.pal@1.0-service vendor.qti.hardware.audio.service android.hardware.bluetooth.audio-service android.hardware.bluetooth.audio@2.1-service); do
+    renice -n -20 -p $pid
+    chrt -f -p 99 $pid
+done
