@@ -1,4 +1,4 @@
-<img width="1280" height="720" alt="Banner" src="https://github.com/user-attachments/assets/25cd2ca7-11c6-432b-97a0-a4193f74d19a" />
+<img width="1280" height="720" alt="Banner" src="https://github.com/user-attachments/assets/f6ff1932-8a47-452f-9815-b8c7777c19c5" />
 
 Support Me: <br />
   [SociaBuzz](https://sociabuzz.com/kanagawa_yamada/tribe) <br />
