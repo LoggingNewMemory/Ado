@@ -4,3 +4,5 @@ Support Me: <br />
   [SociaBuzz](https://sociabuzz.com/kanagawa_yamada/tribe) <br />
   [QRIS](https://t.me/KLAGen2/86) <br />
   [PayPal](https://www.paypal.me/KanagawaYamada) <br />
+
+IMAGE SOURCE: https://i.pximg.net/img-original/img/2026/04/08/18/46/48/143303510_p0.jpg
