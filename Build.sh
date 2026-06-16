@@ -300,16 +300,8 @@ prompt_telegram_post() {
 build_modules() {
     rm -rf "$BUILD_DIR"/*
 
-    read -p "Enter Version (e.g., V1.0): " VERSION
-
-    while true; do
-        read -p "Enter Build Type (LAB/RELEASE): " BUILD_TYPE
-        BUILD_TYPE=${BUILD_TYPE^^}
-        if [[ "$BUILD_TYPE" == "LAB" || "$BUILD_TYPE" == "RELEASE" ]]; then
-            break
-        fi
-        echo "Invalid input. Please enter LAB or RELEASE."
-    done
+    VERSION="3.0"
+    BUILD_TYPE="LAB"
 
     cd "$MODULES_DIR" || exit 1
     MODULE_ID=$(grep "^id=" "module.prop" | cut -d'=' -f2 | tr -d '[:space:]')
