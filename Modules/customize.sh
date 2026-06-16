@@ -6,7 +6,6 @@ ui_print "------------------------------------"
 ui_print "         By: Kanagawa Yamada        "
 ui_print "------------------------------------"
 ui_print " "
-sleep 1.5
 
 ui_print "-----------------📱-----------------"
 ui_print "            DEVICE INFO             "
@@ -20,7 +19,6 @@ ui_print "ANDROID VER : $(getprop ro.build.version.release) "
 ui_print "KERNEL : $(uname -r) "
 ui_print "RAM : $(free | grep Mem |  awk '{print $2}') "
 ui_print " "
-sleep 1.5
 
 ui_print "------------------------------------"
 ui_print "            MODULE INFO             "
@@ -29,7 +27,6 @@ ui_print "Name : Ado"
 ui_print "Version : 3.0"
 ui_print "Support Root : Magisk / KernelSU"
 ui_print " "
-sleep 1.5
 
 ui_print "          Installing Ado           "
 ui_print " "
