@@ -169,23 +169,8 @@ build_modules() {
         cp "system.prop" "../$BUILD_DIR/system.prop.original"
         
         # Add the properties with a leading empty line
-        cat << 'EOF' >> "system.prop"
-
-###################
-# ADO ENHANCED START
-###################
-
-af.resampler.quality=4
-ro.af.client_heap_size_kbyte=10240
-vendor.audio.offload.buffer.size.kb=1024
-audio.offload.multiple.enabled=true
-vendor.audio.offload.passthrough=true
-ro.audio.ignore_effects=true
-ro.audio.samplerate=192000
-ro.vendor.audio.sdk.fluencetype=fluencepro
-persist.vendor.audio.hw.binder.size_kbyte=1024
-vendor.audio.hal.output.suspend.supported=false
-EOF
+        echo "" >> "system.prop"
+        cat "../Enhanced.prop" >> "system.prop"
     fi
 
     # Append to OdoruPonpokorin.sh for ENHANCED

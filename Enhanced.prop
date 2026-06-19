@@ -1,0 +1,11 @@
+###################
+# ADO ENHANCED START
+###################
+
+af.resampler.quality=4
+ro.af.client_heap_size_kbyte=10240
+vendor.audio.offload.buffer.size.kb=1024
+ro.audio.samplerate=192000
+ro.vendor.audio.sdk.fluencetype=fluencepro
+persist.vendor.audio.hw.binder.size_kbyte=1024
+vendor.audio.hal.output.suspend.supported=false
