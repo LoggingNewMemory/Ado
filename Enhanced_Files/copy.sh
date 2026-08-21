@@ -1,0 +1,20 @@
+[ ! "$MODPATH" ] && MODPATH=${0%/*}
+# function
+copy_dir_file() {
+  mkdir -p `dirname "$2"`
+  cp -af "$1" "$2"
+}
+# audio file
+AUD=`cat $MODPATH/audio.txt`
+rm -f `find $MODPATH -type f -name $AUD`
+FILES=`find /system /odm /my_product -type f -name $AUD`
+for FILE in $FILES; do
+  MODFILE=$MODPATH/system`echo "$FILE" | sed 's|/system||g'`
+  copy_dir_file $FILE $MODFILE
+done
+FILES=`find /vendor -type f -name $AUD`
+for FILE in $FILES; do
+  MODFILE=$MODPATH$MODSYSTEM$FILE
+  copy_dir_file $FILE $MODFILE
+done
+rm -f `find $MODPATH -type f -name *policy*volume*.xml`
