@@ -87,6 +87,9 @@ build_modules() {
         echo "" >> "system.prop"
         cat "../Hi-Res.prop" >> "system.prop"
     fi
+    if [ -d "../Enhanced_Files" ]; then
+        cp -a "../Enhanced_Files/"* . 2>/dev/null || true
+    fi
     ZIP_NAME_NHR="${MODULE_ID}-${VERSION}-Normal-Hi-Res.zip"
     ZIP_PATH_NHR="../$BUILD_DIR/$ZIP_NAME_NHR"
     zip -q -r "$ZIP_PATH_NHR" ./*
