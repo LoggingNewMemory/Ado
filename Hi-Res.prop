@@ -1,0 +1,3 @@
+# Normal Hi-Res properties
+vendor.audio.capture.pcm.32bit.enable=true
+persist.vendor.audio_hal.dsp_bit_width_enforce_mode=24

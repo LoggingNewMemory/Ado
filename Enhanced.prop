@@ -9,7 +9,3 @@ ro.audio.samplerate=384000
 ro.vendor.audio.sdk.fluencetype=fluencepro
 persist.vendor.audio.hw.binder.size_kbyte=1024
 vendor.audio.hal.output.suspend.supported=false
-
-# Highest Hi-Res properties
-vendor.audio.capture.pcm.32bit.enable=true
-persist.vendor.audio_hal.dsp_bit_width_enforce_mode=32

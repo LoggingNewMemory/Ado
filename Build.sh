@@ -76,29 +76,41 @@ build_modules() {
     zip -q -r "$ZIP_PATH" ./*
     echo "Created: $ZIP_NAME"
 
-    # --- 2. BUILD ENHANCED ZIP ---
-    # Update module.prop for ENHANCED
+    # --- 2. BUILD NORMAL-HI-RES ZIP ---
     if [ -f "module.prop" ]; then
         cp "module.prop" "module.prop.tmp"
-        sed "s/^name=.*$/name=${ORIGINAL_NAME} [ENHANCED]/" "module.prop.tmp" > "module.prop"
+        sed "s/^name=.*$/name=${ORIGINAL_NAME} [Normal-Hi-Res]/" "module.prop.tmp" > "module.prop"
         rm "module.prop.tmp"
     fi
-
-    # Append to system.prop for ENHANCED
     if [ -f "system.prop" ]; then
-        # Backup outside the module directory so it doesn't get zipped
         cp "system.prop" "../$BUILD_DIR/system.prop.original"
-        
-        # Add the properties with a leading empty line
+        echo "" >> "system.prop"
+        cat "../Hi-Res.prop" >> "system.prop"
+    fi
+    ZIP_NAME_NHR="${MODULE_ID}-${VERSION}-Normal-Hi-Res.zip"
+    ZIP_PATH_NHR="../$BUILD_DIR/$ZIP_NAME_NHR"
+    zip -q -r "$ZIP_PATH_NHR" ./*
+    echo "Created: $ZIP_NAME_NHR"
+
+    # Restore system.prop for next builds
+    if [ -f "../$BUILD_DIR/system.prop.original" ]; then
+        mv "../$BUILD_DIR/system.prop.original" "system.prop"
+    fi
+
+    # --- 3. BUILD ENHANCED ZIP ---
+    if [ -f "module.prop" ]; then
+        cp "module.prop" "module.prop.tmp"
+        sed "s/^name=.*$/name=${ORIGINAL_NAME} [Enhanced]/" "module.prop.tmp" > "module.prop"
+        rm "module.prop.tmp"
+    fi
+    if [ -f "system.prop" ]; then
+        cp "system.prop" "../$BUILD_DIR/system.prop.original"
         echo "" >> "system.prop"
         cat "../Enhanced.prop" >> "system.prop"
     fi
-
-    # Append to OdoruPonpokorin.sh for ENHANCED
     if [ -f "AdoKang/OdoruPonpokorin.sh" ]; then
         cp "AdoKang/OdoruPonpokorin.sh" "../$BUILD_DIR/OdoruPonpokorin.sh.original"
-        
-        cat << 'EOF' >> "AdoKang/OdoruPonpokorin.sh"
+        cat << 'INNER_EOF' >> "AdoKang/OdoruPonpokorin.sh"
 
 # ENHANCED: Override media processing and aggressive debug disabling
 setprop debug.audio.hal 0
@@ -106,18 +118,52 @@ setprop debug.audio.policy 0
 for pid in $(pidof audioserver); do
     ionice -c 1 -n 0 -p $pid
 done
-EOF
+INNER_EOF
     fi
-
-    # Inject Hi-Res file modifications for ENHANCED
     if [ -d "../Enhanced_Files" ]; then
         cp -a "../Enhanced_Files/"* . 2>/dev/null || true
     fi
-
     ZIP_NAME_ENHANCED="${MODULE_ID}-${VERSION}-Enhanced.zip"
     ZIP_PATH_ENHANCED="../$BUILD_DIR/$ZIP_NAME_ENHANCED"
     zip -q -r "$ZIP_PATH_ENHANCED" ./*
     echo "Created: $ZIP_NAME_ENHANCED"
+
+    # --- 4. BUILD ENHANCED-HI-RES ZIP ---
+    if [ -f "module.prop" ]; then
+        cp "module.prop" "module.prop.tmp"
+        sed "s/^name=.*$/name=${ORIGINAL_NAME} [Enhanced-Hi-Res]/" "module.prop.tmp" > "module.prop"
+        rm "module.prop.tmp"
+    fi
+    if [ -f "system.prop" ]; then
+        echo "" >> "system.prop"
+        cat "../Hi-Res.prop" >> "system.prop"
+    fi
+    ZIP_NAME_EHR="${MODULE_ID}-${VERSION}-Enhanced-Hi-Res.zip"
+    ZIP_PATH_EHR="../$BUILD_DIR/$ZIP_NAME_EHR"
+    zip -q -r "$ZIP_PATH_EHR" ./*
+    echo "Created: $ZIP_NAME_EHR"
+
+    # Restore system.prop for next build
+    if [ -f "../$BUILD_DIR/system.prop.original" ]; then
+        cp "../$BUILD_DIR/system.prop.original" "system.prop"
+        echo "" >> "system.prop"
+        cat "../Enhanced.prop" >> "system.prop"
+    fi
+
+    # --- 5. BUILD ENHANCED-MAX-HI-RES ZIP ---
+    if [ -f "module.prop" ]; then
+        cp "module.prop" "module.prop.tmp"
+        sed "s/^name=.*$/name=${ORIGINAL_NAME} [Enhanced-Max-Hi-Res]/" "module.prop.tmp" > "module.prop"
+        rm "module.prop.tmp"
+    fi
+    if [ -f "system.prop" ]; then
+        echo "" >> "system.prop"
+        cat "../Max-Hi-Res.prop" >> "system.prop"
+    fi
+    ZIP_NAME_EMHR="${MODULE_ID}-${VERSION}-Enhanced-Max-Hi-Res.zip"
+    ZIP_PATH_EMHR="../$BUILD_DIR/$ZIP_NAME_EMHR"
+    zip -q -r "$ZIP_PATH_EMHR" ./*
+    echo "Created: $ZIP_NAME_EMHR"
 
     # --- CLEANUP ---
     # Restore module.prop back to normal
@@ -146,7 +192,7 @@ EOF
     # --- ADB Flash / Telegram Logic ---
     if [ "$FLASHTODEVICE" == "1" ]; then
         if [ -f "Modular/FlashToDevice.sh" ]; then
-            bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_ENHANCED" "$BUILD_DIR"
+            bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EMHR" "$BUILD_DIR"
         fi
     else
         # Interactive mode for flashing
@@ -156,12 +202,21 @@ EOF
             echo ""
             echo "Which version do you want to flash?"
             echo "1) Normal ($ZIP_NAME)"
-            echo "2) Enhanced ($ZIP_NAME_ENHANCED)"
-            read -p "Select (1/2): " FLASH_SELECTION
+            echo "2) Normal-Hi-Res ($ZIP_NAME_NHR)"
+            echo "3) Enhanced ($ZIP_NAME_ENHANCED)"
+            echo "4) Enhanced-Hi-Res ($ZIP_NAME_EHR)"
+            echo "5) Enhanced-Max-Hi-Res ($ZIP_NAME_EMHR)"
+            read -p "Select (1-5): " FLASH_SELECTION
             
             if [ -f "Modular/FlashToDevice.sh" ]; then
-                if [ "$FLASH_SELECTION" == "2" ]; then
+                if [ "$FLASH_SELECTION" == "5" ]; then
+                    bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EMHR" "$BUILD_DIR"
+                elif [ "$FLASH_SELECTION" == "4" ]; then
+                    bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EHR" "$BUILD_DIR"
+                elif [ "$FLASH_SELECTION" == "3" ]; then
                     bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_ENHANCED" "$BUILD_DIR"
+                elif [ "$FLASH_SELECTION" == "2" ]; then
+                    bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_NHR" "$BUILD_DIR"
                 else
                     bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME" "$BUILD_DIR"
                 fi
@@ -171,8 +226,11 @@ EOF
 
     if [ "$SENDTOTELEGRAM" == "1" ]; then
         if [ -f "Modular/SendToTelegram.sh" ]; then
-            bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_ENHANCED"
             bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME"
+            bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_NHR"
+            bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_ENHANCED"
+            bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_EHR"
+            bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_EMHR"
         fi
     fi
 }
