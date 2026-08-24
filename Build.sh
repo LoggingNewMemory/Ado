@@ -97,6 +97,27 @@ build_modules() {
         mv "../$BUILD_DIR/system.prop.original" "system.prop"
     fi
 
+    # --- 2.5 BUILD NORMAL-MAX-HI-RES ZIP ---
+    if [ -f "module.prop" ]; then
+        cp "module.prop" "module.prop.tmp"
+        sed "s/^name=.*$/name=${ORIGINAL_NAME} [Normal-Max-Hi-Res]/" "module.prop.tmp" > "module.prop"
+        rm "module.prop.tmp"
+    fi
+    if [ -f "system.prop" ]; then
+        cp "system.prop" "../$BUILD_DIR/system.prop.original"
+        echo "" >> "system.prop"
+        cat "../Max-Hi-Res.prop" >> "system.prop"
+    fi
+    ZIP_NAME_NMHR="${MODULE_ID}-${VERSION}-Normal-Max-Hi-Res.zip"
+    ZIP_PATH_NMHR="../$BUILD_DIR/$ZIP_NAME_NMHR"
+    zip -q -r "$ZIP_PATH_NMHR" ./*
+    echo "Created: $ZIP_NAME_NMHR"
+
+    # Restore system.prop for next builds
+    if [ -f "../$BUILD_DIR/system.prop.original" ]; then
+        mv "../$BUILD_DIR/system.prop.original" "system.prop"
+    fi
+
     # --- 3. BUILD ENHANCED ZIP ---
     if [ -f "module.prop" ]; then
         cp "module.prop" "module.prop.tmp"
@@ -191,8 +212,30 @@ INNER_EOF
 
     # --- ADB Flash / Telegram Logic ---
     if [ "$FLASHTODEVICE" == "1" ]; then
+        echo ""
+        echo "Which version do you want to flash?"
+        echo "1) Normal ($ZIP_NAME)"
+        echo "2) Normal-Hi-Res ($ZIP_NAME_NHR)"
+        echo "3) Normal-Max-Hi-Res ($ZIP_NAME_NMHR)"
+        echo "4) Enhanced ($ZIP_NAME_ENHANCED)"
+        echo "5) Enhanced-Hi-Res ($ZIP_NAME_EHR)"
+        echo "6) Enhanced-Max-Hi-Res ($ZIP_NAME_EMHR)"
+        read -p "Select (1-6): " FLASH_SELECTION
+        
         if [ -f "Modular/FlashToDevice.sh" ]; then
-            bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EMHR" "$BUILD_DIR"
+            if [ "$FLASH_SELECTION" == "6" ]; then
+                bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EMHR" "$BUILD_DIR"
+            elif [ "$FLASH_SELECTION" == "5" ]; then
+                bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EHR" "$BUILD_DIR"
+            elif [ "$FLASH_SELECTION" == "4" ]; then
+                bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_ENHANCED" "$BUILD_DIR"
+            elif [ "$FLASH_SELECTION" == "3" ]; then
+                bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_NMHR" "$BUILD_DIR"
+            elif [ "$FLASH_SELECTION" == "2" ]; then
+                bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_NHR" "$BUILD_DIR"
+            else
+                bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME" "$BUILD_DIR"
+            fi
         fi
     else
         # Interactive mode for flashing
@@ -203,18 +246,21 @@ INNER_EOF
             echo "Which version do you want to flash?"
             echo "1) Normal ($ZIP_NAME)"
             echo "2) Normal-Hi-Res ($ZIP_NAME_NHR)"
-            echo "3) Enhanced ($ZIP_NAME_ENHANCED)"
-            echo "4) Enhanced-Hi-Res ($ZIP_NAME_EHR)"
-            echo "5) Enhanced-Max-Hi-Res ($ZIP_NAME_EMHR)"
-            read -p "Select (1-5): " FLASH_SELECTION
+            echo "3) Normal-Max-Hi-Res ($ZIP_NAME_NMHR)"
+            echo "4) Enhanced ($ZIP_NAME_ENHANCED)"
+            echo "5) Enhanced-Hi-Res ($ZIP_NAME_EHR)"
+            echo "6) Enhanced-Max-Hi-Res ($ZIP_NAME_EMHR)"
+            read -p "Select (1-6): " FLASH_SELECTION
             
             if [ -f "Modular/FlashToDevice.sh" ]; then
-                if [ "$FLASH_SELECTION" == "5" ]; then
+                if [ "$FLASH_SELECTION" == "6" ]; then
                     bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EMHR" "$BUILD_DIR"
-                elif [ "$FLASH_SELECTION" == "4" ]; then
+                elif [ "$FLASH_SELECTION" == "5" ]; then
                     bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_EHR" "$BUILD_DIR"
-                elif [ "$FLASH_SELECTION" == "3" ]; then
+                elif [ "$FLASH_SELECTION" == "4" ]; then
                     bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_ENHANCED" "$BUILD_DIR"
+                elif [ "$FLASH_SELECTION" == "3" ]; then
+                    bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_NMHR" "$BUILD_DIR"
                 elif [ "$FLASH_SELECTION" == "2" ]; then
                     bash Modular/FlashToDevice.sh "$BUILD_DIR/$ZIP_NAME_NHR" "$BUILD_DIR"
                 else
@@ -228,6 +274,7 @@ INNER_EOF
         if [ -f "Modular/SendToTelegram.sh" ]; then
             bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME"
             bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_NHR"
+            bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_NMHR"
             bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_ENHANCED"
             bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_EHR"
             bash Modular/SendToTelegram.sh "$MODULE_ID" "$VERSION" "$BUILD_DIR/$ZIP_NAME_EMHR"
