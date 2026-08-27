@@ -3,7 +3,6 @@
 ###################
 
 af.resampler.quality=4
-ro.af.client_heap_size_kbyte=10240
 vendor.audio.offload.buffer.size.kb=1024
 ro.audio.samplerate=384000
 ro.vendor.audio.sdk.fluencetype=fluencepro

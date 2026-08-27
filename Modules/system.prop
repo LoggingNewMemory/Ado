@@ -1,4 +1,4 @@
-af.fast_track_multiplier=1
+af.fast_track_multiplier=2
 audio.deep_buffer.media=true
 audio.offload.video=true
 audio.offload.track.enable=true
@@ -6,6 +6,7 @@ audio.offload.gapless.enabled=true
 audio.offload.pcm.16bit.enable=true
 audio.offload.pcm.24bit.enable=true
 audio.offload.pcm.32bit.enable=true
+audio.offload.multiple.enabled=true
 aaudio.mmap_policy=2
 aaudio.mmap_exclusive_policy=2
 aaudio.hw_burst_min_usec=2000
@@ -15,19 +16,46 @@ ro.audio.flinger_standby_time_ms=3000
 vendor.audio.offload.buffer.size.kb=256
 ro.audio.monitorRotation=true
 audio.offload.min.duration.secs=15
-ro.af.client_heap_size_kbyte=7168
+ro.af.client_heap_size_kbyte=10240
 ro.audio.spatializer_enabled=true
 persist.bluetooth.a2dp_ldac.default_quality_mode=0
 persist.bluetooth.opus.enabled=true
 
-# Added to Enhance Normal version
+# Audio routing & headphone unplug behavior
+audio.sys.routing.latency=0
+audio.sys.offload.pstimeout.secs=3
+audio.sys.noisy.broadcast.delay=200
+
+# Spatial audio (Android 13+)
+audio.spatial.headtracking.enabled=true
+persist.sys.audio.spatialization.for.headphones=true
+
+# USB external DAC latency
+ro.audio.usb.period_us=5333
+
+# Qualcomm SW decoders & audio features
 vendor.audio.flac.sw.decoder.24bit=true
 vendor.audio.use.sw.alac.decoder=true
 vendor.audio.use.sw.ape.decoder=true
 vendor.audio.offload.multiaac.enable=true
+vendor.audio.volume.headset.gain.depcal=true
+vendor.audio.spkr_prot.enable=true
+vendor.audio.hdr.record.enable=true
+vendor.audio.tunnel.encode=false
+vendor.audio.feature.a2dp_offload.enable=true
+
+# Qualcomm Fluence
+persist.vendor.audio.fluence.voicemode=true
+persist.vendor.audio.fluence.speaker=false
+persist.vendor.audio.ras.enabled=true
+persist.vendor.audio.delta.refresh=true
+
+# Bluetooth: codecs & offload
 persist.bluetooth.sbc_hd_higher_bitrate=1
 persist.bluetooth.disableabsvol=true
 ro.bluetooth.a2dp_offload.supported=true
-vendor.audio.volume.headset.gain.depcal=true
-audio.sys.routing.latency=0
-audio.sys.offload.pstimeout.secs=3
+persist.vendor.bt.a2dp_offload_cap=mask-aac-aptx-aptxhd-ldac
+persist.bluetooth.aptx.hd=1
+
+# Disable Volume Warning
+audio.safemedia.bypass=true

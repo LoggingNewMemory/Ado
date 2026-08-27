@@ -1,3 +1,5 @@
 # Highest Hi-Res properties
+vendor.audio.capture.pcm.24bit.enable=true
 vendor.audio.capture.pcm.32bit.enable=true
 persist.vendor.audio_hal.dsp_bit_width_enforce_mode=32
+persist.bluetooth.a2dp_ldac.default_quality_mode=3
