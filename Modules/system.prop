@@ -52,7 +52,6 @@ persist.vendor.audio.delta.refresh=true
 
 # Bluetooth: codecs & offload
 persist.bluetooth.sbc_hd_higher_bitrate=1
-persist.bluetooth.disableabsvol=true
 ro.bluetooth.a2dp_offload.supported=true
 persist.vendor.bt.a2dp_offload_cap=mask-aac-aptx-aptxhd-ldac
 persist.bluetooth.aptx.hd=1
